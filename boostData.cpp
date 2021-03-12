@@ -8,6 +8,8 @@
 #include "openclData.h"
 #include <boost/compute/container/vector.hpp>
 #include <boost/compute/detail/device_ptr.hpp>
+#include <boost/compute/algorithm/for_each_n.hpp>
+#include <boost/compute/iterator/counting_iterator.hpp>
 #include <vector>
 #include <iostream>
 
@@ -38,10 +40,16 @@ void boostData::cudaToBoost() {
     status = clEnqueueReadBuffer(queue,clMemSrc,CL_TRUE,0,dataSize* sizeof(int),
                                  returnedHostData,0,NULL,NULL);
 
+    compute::vector<int> vec1(dataSize,context);
+    compute::copy(cudaPtr,cudaPtr+dataSize,vec1.begin(),queue);
+
+    vector<int> hostFromBoost(vec1.size());
+    compute::copy(vec1.begin(),vec1.end(),hostFromBoost.begin(),queue);
+
 
     int result = 1;
     for(int i = 0; i < dataSize; i++){
-        if(returnedHostData[i] != hostData[i]){
+        if(hostFromBoost[i] != hostData[i]){
             result = 0;
             break;
         }
